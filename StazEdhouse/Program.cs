@@ -1,9 +1,18 @@
-﻿using StazEdhouse;
+﻿using System.Text;
+using StazEdhouse;
 
-var contents = File.ReadAllText(@"/Users/gerete/Downloads/mapa_mala.txt");
+//var contents = File.ReadAllText(@"/Users/gerete/Downloads/mapa.txt");
 
+//Console.WriteLine(contents.Length);
 
-var haf = new Map(contents);
+var map = new StringBuilder("", 20000);
+
+while (Console.ReadLine() is { } line && line != "")
+{
+    map.Append(line);
+    map.Append('\n');
+}
+
+var haf = new Map(map.ToString());
 
 Console.WriteLine(haf.GetVisibleCount());
-

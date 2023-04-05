@@ -4,21 +4,26 @@ public class Tree
 {
     public Tree()
     {
+        _visible = false;
     }
 
     public Tree(int height)
     {
         Height = height;
+        _visible = false;
     }
-
 
     public int Height { get; set; }
 
-    public bool VisibleFromTop { get; set; }
+    private volatile bool _visible;
 
-    public bool VisibleFromBottom { get; set; }
+    public void SetVisible()
+    {
+        _visible = true;
+    }
 
-    public bool VisibleFromLeft { get; set; }
-
-    public bool VisibleFromRight { get; set; }
+    public bool GetVisible()
+    {
+        return _visible;
+    }
 }

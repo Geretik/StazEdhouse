@@ -1,53 +1,55 @@
+using System.Runtime.InteropServices.ComTypes;
+
 namespace StazEdhouse;
 
 public class Map
 {
+    /* Class Constructor */
     public Map(string map)
     {
-        SetDimensions(map);
-        _map = new Tree[GetRowCount(), GetColumnCount()];
-
-        var index = -1;
-        
-        for (var i = 0; i < GetColumnCount(); i++)
-        {
-            for (var j = 0; j < GetRowCount(); j++)
-            {
-                _map[i, j] = new Tree(GetNextInt(map, index, ref index));
-            }
-        }
-
+        // assuming map in string in correct form
+        ParseMap(map);
+        MarkVisibleTrees();
     }
-    
+
+    /* Object slots */
     private int _rowCount;
     private int _columnCount;
     private Tree[,] _map;
 
+    /* Getters */
     private int GetRowCount()
     {
         return _rowCount;
     }
-    
+
     private int GetColumnCount()
     {
         return _columnCount;
     }
 
+    private Tree GetMapElement(int row, int column)
+    {
+        return _map[row, column];
+    }
+
+
+    /* Setters */
     private void SetDimensions(string s)
     {
-        int row = 0;
-        int column = 0;
+        // sets row and column dimension
+        var row = 0;
+        var column = 0;
 
         for (var j = 0; j < s.Length; j++)
         {
-            if (s[j] == '\r')
+            switch (s[j])
             {
-                continue;
-            }
-
-            if (s[j] == '\n')
-            {
-                column++;
+                case '\r':
+                    continue;
+                case '\n':
+                    column++;
+                    continue;
             }
 
             if (column == 0)
@@ -65,16 +67,39 @@ public class Map
         _columnCount = column;
     }
 
-    private int GetNextInt(string s, int number, ref int index)
+    private void ParseMap(string map)
     {
-        number++;
-        for (var i = number; i < s.Length; i++)
+        // Sets maps dimensions
+        SetDimensions(map);
+
+        // Local variables
+        var index = -1;
+
+        // Preparing 2 dimensions array of Tree class to _class slot 
+        _map = new Tree[GetRowCount(), GetColumnCount()];
+
+        // Filling _map with data from string map
+        for (var i = 0; i < GetRowCount(); i++)
         {
-            if (s[i] <= '9' && s[i] >= '0')
+            for (var j = 0; j < GetColumnCount(); j++)
             {
-                index = i;
-                return int.Parse(s[i].ToString());
+                _map[i, j] = new Tree(GetNextInt(map, index, ref index));
             }
+        }
+    }
+
+    private int GetNextInt(string map, int number, ref int index)
+    {
+        // Returns next int from string map and returns index of the string to the index ref variable
+        // Otherwise returns -1 for int value and -1 for index value
+
+        // Starting index for searching
+        number++;
+        for (var i = number; i < map.Length; i++)
+        {
+            if (map[i] > '9' || map[i] < '0') continue;
+            index = i;
+            return int.Parse(map[i].ToString());
         }
 
         index = -1;
@@ -83,14 +108,14 @@ public class Map
 
     public int GetVisibleCount()
     {
-        MarkVisibleTrees();
+        // Returns Count of visible trees
         var counter = 0;
+
         for (var i = 0; i < GetRowCount(); i++)
         {
             for (var j = 0; j < GetColumnCount(); j++)
             {
-                if (_map[i, j].VisibleFromLeft || _map[i, j].VisibleFromRight || _map[i, j].VisibleFromTop ||
-                    _map[i, j].VisibleFromBottom)
+                if (_map[i, j].GetVisible())
                 {
                     counter++;
                 }
@@ -102,134 +127,93 @@ public class Map
 
     private void MarkVisibleTrees()
     {
-        var threadsLeft = new Thread[GetRowCount()];
-        var threadsRight = new Thread[GetRowCount()];
-        var threadsTop = new Thread[GetColumnCount()];
-        var threadsBottom = new Thread[GetColumnCount()];
+        // Marking visible trees to the Tree Visible slot
 
-        for (var i = 0; i < GetRowCount(); i++)
-        {
-            var localNum = i;
-            threadsLeft[i] = new Thread(() => MarkVisibleFromLeft(localNum, 0));
-        }
-        
-        for (var i = 0; i < GetRowCount(); i++)
-        {
-            var localNum = i;
-            threadsRight[i] = new Thread(() => MarkVisibleFromRight(localNum, GetColumnCount() - 1));
-        }
-        
+        //thread vars
+        var threadsLeft = new Thread[GetColumnCount()];
+        var threadsRight = new Thread[GetColumnCount()];
+        var threadsTop = new Thread[GetRowCount()];
+        var threadsBottom = new Thread[GetRowCount()];
+
+        // preparing left and right Threads
         for (var i = 0; i < GetColumnCount(); i++)
         {
-            var localNum = i;
-            threadsTop[i] = new Thread(() => MarkVisibleFromTop(0, localNum));
+            var row = i;
+            threadsLeft[i] = new Thread(() => MarkVisibleTreesFromLeft(row));
+            threadsRight[i] = new Thread(() => MarkVisibleTreesFromRight(row));
         }
-        
-        for (var i = 0; i < GetColumnCount(); i++)
-        {
-            var localNum = i;
-            threadsBottom[i] = new Thread(() => MarkVisibleFromBottom(GetRowCount() - 1, localNum));
-        }
-        
+
+        // preparing top and bottom Threads
         for (var i = 0; i < GetRowCount(); i++)
+        {
+            var column = i;
+            threadsTop[i] = new Thread(() => MarkVisibleTreesFromTop(column));
+            threadsBottom[i] = new Thread(() => MarkVisibleTreesFromBottom(column));
+        }
+
+        // starting left and right threads
+        for (var i = 0; i < GetColumnCount(); i++)
         {
             threadsLeft[i].Start();
             threadsRight[i].Start();
         }
-        
-        for (var i = 0; i < GetColumnCount(); i++)
+
+        // starting top and bottom threads
+        for (var i = 0; i < GetRowCount(); i++)
         {
             threadsTop[i].Start();
             threadsBottom[i].Start();
         }
 
-        for (var i = 0; i < GetRowCount(); i++)
+        // waiting for left and right Threads
+        for (var i = 0; i < GetColumnCount(); i++)
         {
             threadsLeft[i].Join();
             threadsRight[i].Join();
         }
-        
-        for (var i = 0; i < GetColumnCount(); i++)
+
+        // waiting for top and bottom Threads
+        for (var i = 0; i < GetRowCount(); i++)
         {
             threadsTop[i].Join();
             threadsBottom[i].Join();
         }
-
-    }
-    
-    private void MarkVisibleFromLeft(int row, int column)
-    {
-        MarkVisible(row, column, 1, GetRowCount());
-    }
-    
-    private void MarkVisibleFromRight(int row, int column)
-    {
-        MarkVisible(row, column, 3, GetRowCount());
-    }
-    
-    private void MarkVisibleFromTop(int row, int column)
-    {
-        MarkVisible(row, column, 2, GetColumnCount());
-    }
-    
-    private void MarkVisibleFromBottom(int row, int column)
-    {
-        MarkVisible(row, column, 4, GetColumnCount());
     }
 
-    private void MarkVisible(int row, int column, int direction, int times)
+    private void MarkVisibleTreesFromLeft(int row)
     {
-        var max = -1; 
+        MarkVisibleTrees(row, 0, 0, 1, GetColumnCount());
+    }
+
+    private void MarkVisibleTreesFromRight(int row)
+    {
+        MarkVisibleTrees(row, GetColumnCount() - 1, 0, -1, GetColumnCount());
+    }
+
+    private void MarkVisibleTreesFromTop(int column)
+    {
+        MarkVisibleTrees(0, column, 1, 0, GetRowCount());
+    }
+
+    private void MarkVisibleTreesFromBottom(int column)
+    {
+        MarkVisibleTrees(GetRowCount() - 1, column, -1, 0, GetRowCount());
+    }
+
+    private void MarkVisibleTrees(int row, int column, int rowStep, int columnStep, int times)
+    {
+        var max = -1;
         while (times > 0)
         {
-            //Console.Write($"row={row} column={column} height={_map[row, column].Height}\n");
             if (max < _map[row, column].Height)
             {
-                switch (direction)
-                {
-                    case 1:
-                        _map[row, column].VisibleFromLeft = true;
-                        max = _map[row, column].Height;
-                        column++;
-                        break;
-                    case 3:
-                        _map[row, column].VisibleFromRight = true;
-                        max = _map[row, column].Height;
-                        column--;
-                        break;
-                    case 2:
-                        _map[row, column].VisibleFromTop = true;
-                        max = _map[row, column].Height;
-                        row++;
-                        break;
-                    default:
-                        _map[row, column].VisibleFromBottom = true;
-                        max = _map[row, column].Height;
-                        row--;
-                        break;
-                }
-            }
-            else
-            {
-                switch (direction)
-                {
-                    case 1:
-                        column++;
-                        break;
-                    case 3:
-                        column--;
-                        break;
-                    case 2:
-                        row++;
-                        break;
-                    default:
-                        row--;
-                        break;
-                }
+                _map[row, column].SetVisible();
+                max = _map[row, column].Height;
             }
 
+            row += rowStep;
+            column += columnStep;
             times--;
         }
-        
     }
 }
