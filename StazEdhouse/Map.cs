@@ -130,13 +130,13 @@ public class Map
         // Marking visible trees to the Tree Visible slot
 
         //thread vars
-        var threadsLeft = new Thread[GetColumnCount()];
-        var threadsRight = new Thread[GetColumnCount()];
-        var threadsTop = new Thread[GetRowCount()];
-        var threadsBottom = new Thread[GetRowCount()];
+        var threadsLeft = new Thread[GetRowCount()];
+        var threadsRight = new Thread[GetRowCount()];
+        var threadsTop = new Thread[GetColumnCount()];
+        var threadsBottom = new Thread[GetColumnCount()];
 
         // preparing left and right Threads
-        for (var i = 0; i < GetColumnCount(); i++)
+        for (var i = 0; i < GetRowCount(); i++)
         {
             var row = i;
             threadsLeft[i] = new Thread(() => MarkVisibleTreesFromLeft(row));
@@ -144,7 +144,7 @@ public class Map
         }
 
         // preparing top and bottom Threads
-        for (var i = 0; i < GetRowCount(); i++)
+        for (var i = 0; i < GetColumnCount(); i++)
         {
             var column = i;
             threadsTop[i] = new Thread(() => MarkVisibleTreesFromTop(column));
@@ -152,28 +152,28 @@ public class Map
         }
 
         // starting left and right threads
-        for (var i = 0; i < GetColumnCount(); i++)
+        for (var i = 0; i < GetRowCount(); i++)
         {
             threadsLeft[i].Start();
             threadsRight[i].Start();
         }
 
         // starting top and bottom threads
-        for (var i = 0; i < GetRowCount(); i++)
+        for (var i = 0; i < GetColumnCount(); i++)
         {
             threadsTop[i].Start();
             threadsBottom[i].Start();
         }
 
         // waiting for left and right Threads
-        for (var i = 0; i < GetColumnCount(); i++)
+        for (var i = 0; i < GetRowCount(); i++)
         {
             threadsLeft[i].Join();
             threadsRight[i].Join();
         }
 
         // waiting for top and bottom Threads
-        for (var i = 0; i < GetRowCount(); i++)
+        for (var i = 0; i < GetColumnCount(); i++)
         {
             threadsTop[i].Join();
             threadsBottom[i].Join();
