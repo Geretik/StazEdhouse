@@ -59,6 +59,10 @@ public class Map
                 case '\r':
                     continue;
                 case '\n':
+                    if (row.Length == 0)
+                    {
+                        return false;
+                    }
                     rows.Add(row);
                     rowLength = row.Length;
                     row.Clear();
