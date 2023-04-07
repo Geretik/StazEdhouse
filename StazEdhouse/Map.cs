@@ -7,12 +7,15 @@ public class Map
     /* Class Constructor */
     public Map(string map)
     {
-        if (!ParseMap(map))
+        try
         {
-            throw new Exception("Input error");
+            ParseMap(map);
+            MarkVisibleTrees();
         }
-        
-        MarkVisibleTrees();
+        catch
+        {
+            throw new Exception("Input Error");
+        }
     }
 
     /* Object slots */
@@ -48,7 +51,7 @@ public class Map
         var row = new StringBuilder(512);
         var rows = new List<StringBuilder>();
         var rowLength = 0;
-        
+
         foreach (var l in map)
         {
             switch (l)
@@ -79,7 +82,7 @@ public class Map
         return true;
     }
 
-    private bool ParseMap(string map)
+    private void ParseMap(string map)
     {
         var rowCount = 0;
         var columnCount = 0;
@@ -87,9 +90,9 @@ public class Map
         // checks for validity of the input map
         if (!IsValid(map, ref rowCount, ref columnCount))
         {
-            return false;
+            throw new Exception("Input Error");
         }
-        
+
         // set dimension
         SetDimensions(rowCount, columnCount);
 
@@ -107,8 +110,6 @@ public class Map
                 _map[i, j] = new Tree(GetNextInt(map, index, ref index));
             }
         }
-
-        return true;
     }
 
     private static int GetNextInt(string map, int number, ref int index)
@@ -155,7 +156,7 @@ public class Map
         var threadTop = new Thread(CallMarkingFromTop);
         var threadRight = new Thread(CallMarkingFromRight);
         var threadBottom = new Thread(CallMarkingFromBottom);
-        
+
         // strating threads
         threadLeft.Start();
         threadTop.Start();
@@ -168,7 +169,7 @@ public class Map
         threadRight.Join();
         threadBottom.Join();
     }
-    
+
     private void CallMarkingFromLeft()
     {
         for (var i = 0; i < GetRowCount(); i++)

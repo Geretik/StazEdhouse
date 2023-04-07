@@ -1,16 +1,21 @@
 using System.Text;
 using StazEdhouse;
 
-var map = new StringBuilder("", 20000);
-
-while (Console.ReadLine() is { } line && line != "")
+try
 {
-    map.Append(line);
-    map.Append('\n');
+    var map = new StringBuilder("", 20000);
+
+    while (Console.ReadLine() is { } line && line != "")
+    {
+        map.Append(line);
+        map.Append('\n');
+    }
+
+    var visibleTrees = new Map(map.ToString());
+
+    Console.WriteLine(visibleTrees.GetVisibleCount());
 }
-
-//Console.WriteLine(map.ToString());
-
-var haf = new Map(map.ToString());
-
-Console.WriteLine(haf.GetVisibleCount());
+catch (Exception e)
+{
+    Console.WriteLine(e.Message);
+}
