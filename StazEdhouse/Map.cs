@@ -45,7 +45,7 @@ public class Map
     {
         if (map.Length == 0)
         {
-            return true;
+            return false;
         }
 
         var row = new StringBuilder(512);
