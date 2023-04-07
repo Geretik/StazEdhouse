@@ -3,7 +3,7 @@ using StazEdhouse;
 
 try
 {
-    var map = new StringBuilder("", 20000);
+    var map = new StringBuilder("", 40000);
 
     while (Console.ReadLine() is { } line && line != "")
     {
