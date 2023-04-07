@@ -14,7 +14,7 @@ public class Map
         }
         catch
         {
-            throw new Exception("Input Error");
+            throw;
         }
     }
 
