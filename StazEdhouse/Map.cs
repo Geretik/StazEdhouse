@@ -45,11 +45,11 @@ public class Map
     {
         if (map.Length == 0)
         {
-            return false;
+            return true;
         }
 
         var row = new StringBuilder(512);
-        var rows = new List<StringBuilder>();
+        var rows = new List<string>();
         var rowLength = 0;
 
         foreach (var l in map)
@@ -63,7 +63,7 @@ public class Map
                     {
                         return false;
                     }
-                    rows.Add(row);
+                    rows.Add(row.ToString());
                     rowLength = row.Length;
                     row.Clear();
                     break;
