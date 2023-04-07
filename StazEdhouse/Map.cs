@@ -1,15 +1,17 @@
-using System.Runtime;
-using System.Runtime.InteropServices.ComTypes;
+using System.Text;
 
 namespace StazEdhouse;
 
 public class Map
 {
     /* Class Constructor */
-    public Map(string map, int rowCount, int columnCount)
+    public Map(string map)
     {
-        SetDimensions(rowCount, columnCount);
-        ParseMap(map);
+        if (!ParseMap(map))
+        {
+            throw new Exception("Input error");
+        }
+        
         MarkVisibleTrees();
     }
 
@@ -36,8 +38,61 @@ public class Map
     }
 
     /* Main methods */
-    private void ParseMap(string map)
+    private static bool IsValid(string map, ref int rowCount, ref int columnCount)
     {
+        if (map.Length == 0)
+        {
+            return false;
+        }
+
+        var row = new StringBuilder(512);
+        var rows = new List<StringBuilder>();
+        var rowLength = 0;
+        
+        foreach (var l in map)
+        {
+            switch (l)
+            {
+                case '\r':
+                    continue;
+                case '\n':
+                    rows.Add(row);
+                    rowLength = row.Length;
+                    row.Clear();
+                    break;
+                case < '0' or > '9':
+                    return false;
+                default:
+                    row.Append(l);
+                    break;
+            }
+        }
+
+        var cols = rows[0];
+        if (rows.Any(r => r.Length != cols.Length))
+        {
+            return false;
+        }
+
+        rowCount = rows.Count;
+        columnCount = rowLength;
+        return true;
+    }
+
+    private bool ParseMap(string map)
+    {
+        var rowCount = 0;
+        var columnCount = 0;
+
+        // checks for validity of the input map
+        if (!IsValid(map, ref rowCount, ref columnCount))
+        {
+            return false;
+        }
+        
+        // set dimension
+        SetDimensions(rowCount, columnCount);
+
         // Local variables
         var index = -1;
 
@@ -52,9 +107,11 @@ public class Map
                 _map[i, j] = new Tree(GetNextInt(map, index, ref index));
             }
         }
+
+        return true;
     }
 
-    private int GetNextInt(string map, int number, ref int index)
+    private static int GetNextInt(string map, int number, ref int index)
     {
         // Returns next int from string map and returns index of the string to the index ref variable
         // Otherwise returns -1 for int value and -1 for index value
@@ -94,10 +151,10 @@ public class Map
     private void MarkVisibleTrees()
     {
         // prepares threads
-        var threadLeft = new Thread(() => CallMarkingFromLeft());
-        var threadTop = new Thread(() => CallMarkingFromTop());
-        var threadRight = new Thread(() => CallMarkingFromRight());
-        var threadBottom = new Thread(() => CallMarkingFromBottom());
+        var threadLeft = new Thread(CallMarkingFromLeft);
+        var threadTop = new Thread(CallMarkingFromTop);
+        var threadRight = new Thread(CallMarkingFromRight);
+        var threadBottom = new Thread(CallMarkingFromBottom);
         
         // strating threads
         threadLeft.Start();
@@ -116,8 +173,7 @@ public class Map
     {
         for (var i = 0; i < GetRowCount(); i++)
         {
-            var row = i;
-            MarkVisibleTreesFromLeft(row);
+            MarkVisibleTreesFromLeft(i);
         }
     }
 
@@ -125,8 +181,7 @@ public class Map
     {
         for (var i = 0; i < GetColumnCount(); i++)
         {
-            var column = i;
-            MarkVisibleTreesFromTop(column);
+            MarkVisibleTreesFromTop(i);
         }
     }
 
@@ -134,8 +189,7 @@ public class Map
     {
         for (var i = 0; i < GetRowCount(); i++)
         {
-            var row = i;
-            MarkVisibleTreesFromRight(row);
+            MarkVisibleTreesFromRight(i);
         }
     }
 
@@ -143,8 +197,7 @@ public class Map
     {
         for (var i = 0; i < GetColumnCount(); i++)
         {
-            var column = i;
-            MarkVisibleTreesFromBottom(column);
+            MarkVisibleTreesFromBottom(i);
         }
     }
 
